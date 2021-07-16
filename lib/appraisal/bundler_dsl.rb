@@ -5,7 +5,7 @@ module Appraisal
     attr_reader :dependencies
 
     PARTS = %w(source ruby_version gits paths dependencies groups
-      platforms source_blocks gemspec)
+      platforms source_blocks gemspec eval_gemfile)
 
     def initialize
       @sources = []
@@ -18,6 +18,7 @@ module Appraisal
       @paths = Hash.new
       @source_blocks = Hash.new
       @git_sources = {}
+      @eval_gemfile = []
     end
 
     def run(&block)
@@ -88,6 +89,10 @@ module Appraisal
       @git_sources[source] = block
     end
 
+    def eval_gemfile(path, contents = nil)
+      @eval_gemfile << [path, contents]
+    end
+
     protected
 
     attr_writer :git_sources
@@ -123,6 +128,12 @@ module Appraisal
     def dependencies_entry_for_dup
       @dependencies.for_dup
     end
+
+    def eval_gemfile_entry
+      @eval_gemfile.map { |(p, c)| "eval_gemfile(#{p.inspect}#{", #{c.inspect}" if c})" } * "\n\n"
+    end
+
+    alias_method :eval_gemfile_entry_for_dup, :eval_gemfile_entry
 
     [:gits, :paths, :platforms, :groups, :source_blocks].
       each do |method_name|
